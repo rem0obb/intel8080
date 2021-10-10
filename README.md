@@ -10,7 +10,7 @@ The Intel 8080 ("eighty-eighty") is the second 8-bit microprocessor designed and
 
 > [Documentation](src/doc.md)
 
-> [About]()
+> [About](utils/intel8080.pdf)
 
 ## Tests Performed
 
