@@ -42,7 +42,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <string.h>
+#include <cstring>
 
 #define MAX_MEMORY 0x10000
 
@@ -75,13 +75,18 @@ namespace memory
 typedef class instructions
 {
     protected:
-        word_t PSW, AF; // program status word
+        // program status word 
+        byte_t PSW;
+        
+        // flags and accumulator
+        word_t AF; 
 
         // program counter, stack pointer
         word_t PC, SP;
 
         // registers
         byte_t A, C, H, L, B, D, E;
+        word_t BC, HL, DE; //  pairs of registers 
 
         // flags
         bool AC, SF, CF, PF, ZF;
@@ -92,10 +97,11 @@ typedef class instructions
         byte_t data8;
         bool flags;
 
-        // instructions
+        // stack manipulation
         void push(word_t data16);
         word_t pop();
 
+        // instructions
         void add(word_t data16);
         void adc(word_t data16);
         void dad(word_t data16);
@@ -105,8 +111,15 @@ typedef class instructions
         void ana(word_t data16);
         void ora(word_t data16);
         void xra(word_t data16);
+        void ret();
+        void jmp();
+        void call();
+        void rst(word_t addr);
         byte_t inr(byte_t data8);
         byte_t dcr(byte_t data8);
+
+        void port_out(byte_t data8, byte_t val);
+        byte_t port_in(byte_t data8);
 
         void set_bc(word_t data16);
         void set_hl(word_t data16);
@@ -114,9 +127,6 @@ typedef class instructions
         word_t get_bc();
         word_t get_hl();
         word_t get_de();
-
-        byte_t port_in();
-        void port_out();
 
 } Instructions;
 
@@ -136,6 +146,7 @@ typedef class Microprocessor : protected Instructions
         byte_t get_register_d();
         byte_t get_register_b();
         byte_t get_register_l();
+        byte_t get_register_h();
         int get_cycles();
         byte_t *memory_addr();
 
