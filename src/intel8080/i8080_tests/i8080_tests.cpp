@@ -56,8 +56,7 @@ void execute_tests(std::string name)
 
 int main()
 {
-    //execute_tests("src/intel8080/i8080_tests/bin/TEST.COM");
-    execute_tests("/home/mob/Public/i8080-core/CPUTEST.COM");
+    execute_tests("src/intel8080/i8080_tests/bin/TEST.COM");
 
     return EXIT_SUCCESS;
 }
