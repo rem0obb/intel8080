@@ -21,7 +21,7 @@ void execute_tests(std::string name)
 
     mem[5] = 0xc9; // inject memory for subrotine
         
-    while (instructions < 100000000)
+    while (true)
     { 
         PC = cpu.get_pc();
         E = cpu.get_register_e();
