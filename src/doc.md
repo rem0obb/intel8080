@@ -1,8 +1,10 @@
 # Documentation
 
-In this part I will explain a little about the functions within the program, for study purposes, if you are thinking of implementing your own intel 8080 emulator, you can also take my code as a reference for your implementation, lets go!!
+In this part I will explain a little about the functions within the program, for study purposes, 
+if you are thinking of implementing your own intel 8080 emulator, 
+you can also take my code as a reference for your implementation, lets go!!
 
-## API
+## API´s
 
 part that the user can use to develop some application on top of the emulator
 

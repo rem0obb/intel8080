@@ -10,7 +10,7 @@ The Intel 8080 ("eighty-eighty") is the second 8-bit microprocessor designed and
 
 > [Documentation](src/doc.md)
 
-> [About]()
+> [About](utils/intel8080.pdf)
 
 ## Tests Performed
 
@@ -19,7 +19,7 @@ Source for tests in file [i8080_tests.cpp](src/intel8080/i8080_tests/i8080_tests
 > - [x] TEST.COM
 
 
-## Credits and References
+## References
 
  
  * http://www.emulator101.com/reference/8080-by-opcode.html
