@@ -39,20 +39,8 @@
 
 #include <i8080.hpp>
 
-#define ret PC = pop()
-
-#define jmp PC = memory::read_memory_word(PC);
-
-#define call      \
-    push(PC + 2); \
-    jmp;
-
-#define rst(addr) \
-    push(PC);     \
-    PC = addr;
-
+// cycles intel 8080 variables 4, 5, 7, 10, or 11 cycles
 inline static constexpr byte_t cycles_opcode[256] = {
-
 
     4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,  
     4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,  
@@ -76,16 +64,17 @@ inline static constexpr byte_t cycles_opcode[256] = {
     
 };
 
-inline static bool parity(word_t n)
+// The Parity bit is set to 1 for even parity, and is reset to 0 for odd parity
+inline static bool parity(byte_t n)
 {
     byte_t p_count = 0;
     for (int i = 0; i < 8; i++)
-        p_count += ((n >> i) & 1);
+        p_count += (n >> i) & 1;
 
     return (p_count & 1) == 0;
 }
 
-// instructions 
+// instructions metod in class
 void Instructions::push(word_t data16)
 {
     SP -= 2;
@@ -94,9 +83,9 @@ void Instructions::push(word_t data16)
 
 word_t Instructions::pop()
 {
-    word_t flag = memory::read_memory_word(SP);
+    data16 = memory::read_memory_word(SP);
     SP += 2;
-    return flag;
+    return data16;
 }
 
 void Instructions::add(word_t data16)
@@ -123,8 +112,8 @@ void Instructions::adc(word_t data16)
 
 void Instructions::dad(word_t data16)
 {
-    CF = ((get_hl() + data16) >> 16) & 1;
     set_hl(get_hl() + data16);
+    CF = ((get_hl() + data16) >> 16) & 1;
 }
 
 void Instructions::sub(word_t data16)
@@ -161,32 +150,54 @@ void Instructions::cmp(word_t data16)
 
 void Instructions::ana(word_t data16)
 {
-    AC = ((A | data16) & 0x08) != 0;
     A &= data16;
+    AC = ((A | data16) & 0x08) != 0;
     SF = (A & 0x80) != 0;
     PF = parity(A);
-    CF = 0;
+    CF = (A & 0x100) != 0;
     ZF = (A == 0);
 }
 
 void Instructions::ora(word_t data16)
 {
     A |= data16;
-    CF = 0;
+    CF = (A & 0x100) != 0;
     SF = (A & 0x80) != 0;
     PF = parity(A);
-    AC = 0;
+    AC = ((A | data16) & 0x08) != 0;
     ZF = (A == 0);
 }
 
 void Instructions::xra(word_t data16)
 {
     A ^= data16;
-    CF = 0;
+    CF = (A & 0x100) != 0;
     SF = (A & 0x80) != 0;
     PF = parity(A);
-    AC = 0;
+    AC = ((A | data16) & 0x08) != 0;
     ZF = (A == 0);
+}
+
+void Instructions::ret()
+{ 
+    PC = pop();
+}
+
+void Instructions::jmp()
+{ 
+    PC = memory::read_memory_word(PC);
+}
+
+void Instructions::call()
+{
+    push(PC + 2);
+    jmp();
+}
+
+void Instructions::rst(word_t addr)
+{
+    push(PC + 2);
+    PC = addr;
 }
 
 byte_t Instructions::inr(byte_t data8)
@@ -211,56 +222,64 @@ byte_t Instructions::dcr(byte_t data8)
     return this->data8;
 }
 
+byte_t Instructions::port_in(byte_t data8)
+{ 
+    exit(EXIT_SUCCESS);
+}
+
+void Instructions::port_out(byte_t data8, byte_t val)
+{ } 
+
 void Instructions::set_bc(word_t data16)
 {
-    B = data16 >> 8;
-    C = data16 & 0xff;
+    BC = data16;
+    B = BC >> 8;
+    C = BC & 0xff;
 }
 
 void Instructions::set_hl(word_t data16)
 {
-    H = data16 >> 8;
-    L = data16 & 0xff;
+    HL = data16;
+    H = HL >> 8;
+    L = HL & 0xff;
 }
 
 void Instructions::set_de(word_t data16)
 {
-    D = data16 >> 8;
-    E = data16 & 0xff;
+    DE = data16;
+    D = DE >> 8;
+    E = DE & 0xff;
 }
 
 word_t Instructions::get_bc()
 {
-    return (B << 8) | C;
+    BC = (B << 8) | C;
+    return BC;
 }
 
 word_t Instructions::get_hl()
 {
-    return (H << 8) | L;
+    HL = (H << 8) | L;
+    return HL;
 }
 
 word_t Instructions::get_de()
 {
-    return (D << 8) | E;
-}
-
-byte_t Instructions::port_in()
-{
-    return 0;
-}
-
-void Instructions::port_out()
-{
+    DE = (D << 8) | E;
+    return DE;
 }
 
 void i8080::flags_init()
 {
-    PSW = 0, AF = 0;
+    PSW = 0; 
+    AF = 0;
+    
     PC = 0, SP = 0;
 
     A = 0, C = 0, H = 0, L = 0, B = 0, D = 0, E = 0;
+    BC = 0, DE = 0, BC = 0;
 
-    AC = 0, SF = 0, CF = 0, PF = 0, ZF = 0;
+    AC = false, SF = false, CF = false, PF = false, ZF = false;
 
     cycles = 0;
     data16 = 0;
@@ -273,8 +292,8 @@ void i8080::execute_opcode(byte_t opcode)
 
     switch (opcode)
     {
-    // undocumented
-    case 0x00: // nop
+    // undocumented and nop
+    case 0x00:
     case 0x08:
     case 0x10:
     case 0x18:
@@ -284,53 +303,53 @@ void i8080::execute_opcode(byte_t opcode)
     case 0x38:
         break;
 
-    case 0x01:
-        set_bc(memory::read_memory_word(PC)); // lxi bc
+    case 0x01: // lxi bc
+        set_bc(memory::read_memory_word(PC));
         PC += 2;
         break;
-    case 0x02:
-        memory::write_memory_byte(get_bc(), A); // stax bc
+    case 0x02: // stax bc
+        memory::write_memory_byte(get_bc(), A);
         break;
-    case 0x03:
-        set_bc(get_bc() + 1); // inx b
+    case 0x03: // inx b
+        set_bc(get_bc() + 1);
         break;
-    case 0x04:
+    case 0x04: // inr b
         B = inr(B);
         break;
-    case 0x05:
+    case 0x05: // dcr b
         B = dcr(B);
         break;
-    case 0x06:
-        B = memory::read_memory_byte(PC++); // mvi b, d8
+    case 0x06: // mvi b, d8
+        B = memory::read_memory_byte(PC++);
         break;
-    case 0x07:
+    case 0x07: // rlc
         CF = (A & 0x80) != 0;
         A = (A << 1) | CF;
         break;
-    case 0x09:
+    case 0x09: // dad b
         dad(get_bc());
         break;
-    case 0x0a:
-        A = memory::read_memory_byte(get_bc()); // ldax b
+    case 0x0a: // ldax b
+        A = memory::read_memory_byte(get_bc());
         break;
-    case 0x0b:
-        set_bc(get_bc() - 1); // dcx  bc
+    case 0x0b: // dcx  bc
+        set_bc(get_bc() - 1);
         break;
-    case 0x0c:
+    case 0x0c: // inr c
         C = inr(C);
         break;
-    case 0x0d:
+    case 0x0d: // dcr c
         C = dcr(C);
         break;
-    case 0x0e:
-        C = memory::read_memory_byte(PC++); // mvi C, d8
+    case 0x0e: // mvi C, d8
+        C = memory::read_memory_byte(PC++);
         break;
     case 0x0f:
         CF = A & 0x01; // rrc
         A = (A >> 1) | (CF << 7);
         break;
-    case 0x11:
-        set_de(memory::read_memory_word(PC)); // lxi de
+    case 0x11: // lxi de
+        set_de(memory::read_memory_word(PC));
         PC += 2;
         break;
     case 0x12:
@@ -350,8 +369,8 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0x17:
         flags = CF;
-        CF = A >> 7; // ral
-        A = (A << 1) | flags;
+        CF = A >> 0x07; // ral
+        A = (A << 0x01) | flags;
         break;
     case 0x19:
         dad(get_de());
@@ -388,26 +407,27 @@ void i8080::execute_opcode(byte_t opcode)
         set_hl(get_hl() + 1); // inx h
         break;
     case 0x24:
-        H = inr(H);
+        H = inr(H); // inr H
         break;
     case 0x25:
-        H = dcr(H);
+        H = dcr(H); // dcr H
         break;
     case 0x26:
         H = memory::read_memory_byte(PC++); // mvi h, d8
         break;
     case 0x27: // daa
         if (AC || (A & 0xf) > 9)
-        {
             A += 0x06;
-        }
         if (CF || (A >> 4) > 9)
         {
             A += 0x60;
-            CF = 1;
+            flags = true;
         }
-        PF = parity(A);
-        AC = 0;
+        parity(A);
+        CF = flags;
+        SF = (A & 0x80) != 0;
+        AC = A >> 7 & 0x1 ? 0 : 1;
+        ZF = (A == 0);
         break;
     case 0x29:
         dad(get_hl());
@@ -429,7 +449,7 @@ void i8080::execute_opcode(byte_t opcode)
         L = memory::read_memory_byte(PC++); // mvi l, d8
         break;
     case 0x2f:
-        A = ~A; // cma, if A =  51H converting for aeh
+        A = ~A; // cma, if A = 51H converting for aeh
         break;
     case 0x31:
         SP = memory::read_memory_word(PC); // lxi sp
@@ -452,7 +472,7 @@ void i8080::execute_opcode(byte_t opcode)
         memory::write_memory_byte(get_hl(), memory::read_memory_byte(PC++)); // mvi h, d8
         break;
     case 0x37:
-        CF = 1;
+        CF = true;
         break;
     case 0x39:
         dad(SP);
@@ -861,27 +881,23 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xc0:
         if (!ZF)
-            ret;
+            ret();
         break;
     case 0xc1:
         set_bc(pop());
         break;
     case 0xc2: // jnz
         if (!ZF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
     case 0xc3:
-        jmp;
+        jmp();
         break;
     case 0xc4:
         if (!ZF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
@@ -896,32 +912,28 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xc8:
         if (ZF)
-            ret;
+            ret();
         break;
     case 0xc9:
-        ret; // ret
+        ret(); // ret
         break;
     case 0xca:
         if (ZF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
     case 0xcb:
-        jmp;
+        jmp();
         break;
     case 0xcc:
         if (ZF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
     case 0xcd:
-        call;
+        call();
         break;
     case 0xce:
         adc(memory::read_memory_byte(PC++));
@@ -931,27 +943,23 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xd0:
         if (!CF)
-            ret;
+            ret();
         break;
     case 0xd1:
         set_de(pop());
         break;
     case 0xd2: // jnc
         if (!CF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
     case 0xd3:
-        port_out();
+        port_out(memory::read_memory_byte(PC++), A);
         break;
     case 0xd4:
         if (!CF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
@@ -966,32 +974,28 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xd8:
         if (CF)
-            ret;
+            ret();
         break;
     case 0xd9:
-        ret;
+        ret();
         break;
     case 0xda:
         if (CF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
     case 0xdb:
-        port_in();
+        A = port_in(memory::read_memory_byte(PC++));
         break;
     case 0xdc:
         if (CF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
     case 0xdd:
-        call;
+        call();
         break;
     case 0xde:
         sbb(memory::read_memory_byte(PC++));
@@ -1001,16 +1005,14 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xe0:
         if (!PF)
-            ret;
+            ret();
         break;
     case 0xe1:
         set_hl(pop());
         break;
     case 0xe2:
         if (!PF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
@@ -1021,9 +1023,7 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xe4: // cpo
         if (!PF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
@@ -1038,16 +1038,14 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xe8:
         if (PF)
-            ret;
+            ret();
         break;
     case 0xe9:
         PC = get_hl(); // pchl
         break;
     case 0xea: // jpe
         if (PF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
@@ -1058,14 +1056,12 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xec:
         if (PF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
     case 0xed:
-        call;
+        call();
         break;
     case 0xee:
         xra(memory::read_memory_byte(PC++));
@@ -1075,23 +1071,21 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xf0:
         if (!SF)
-            ret;
+            ret();
         break;
     case 0xf1: // pop psw
-        AF = pop();
-        A = AF >> 8;
+        AF  = pop();
+        A   = AF >> 8;
         PSW = AF & 0xff;
-        SF = (!SF) ? PSW >> 7 & 0x1 : !PSW >> 7 & 0x1;
-        ZF = (!ZF) ? PSW >> 6 & 0x1 : !PSW >> 6 & 0x1;
-        AC = (!AC) ? PSW >> 4 & 0x1 : !PSW >> 4 & 0x1;
-        PF = (!PF) ? PSW >> 2 & 0x1 : !PSW >> 2 & 0x1;
-        CF = (!CF) ? PSW >> 0 & 0x1 : !PSW >> 0 & 0x1;
+        SF = (!SF) ? (PSW >> 0x7) & 0x1 : (~PSW >> 0x7) & 0x1;
+        ZF = (!ZF) ? (PSW >> 0x6) & 0x1 : (~PSW >> 0x6) & 0x1;
+        AC = (!AC) ? (PSW >> 0x4) & 0x1 : (~PSW >> 0x4) & 0x1;
+        PF = (!PF) ? (PSW >> 0x2) & 0x1 : (~PSW >> 0x2) & 0x1;
+        CF = (!CF) ? (PSW >> 0x0) & 0x1 : (~PSW >> 0x0) & 0x1;
         break;
     case 0xf2:
         if (!SF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
@@ -1099,9 +1093,7 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xf4:
         if (!SF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
@@ -1121,16 +1113,14 @@ void i8080::execute_opcode(byte_t opcode)
         break;
     case 0xf8: // rm
         if (SF)
-            ret;
+            ret();
         break;
     case 0xf9:
         SP = get_hl();
         break;
     case 0xfa:
         if (SF)
-        {
-            jmp;
-        }
+            jmp();
         else
             PC += 2;
         break;
@@ -1138,9 +1128,7 @@ void i8080::execute_opcode(byte_t opcode)
         break; // not implemented
     case 0xfc:
         if (SF)
-        {
-            call;
-        }
+            call();
         else
             PC += 2;
         break;
@@ -1151,7 +1139,7 @@ void i8080::execute_opcode(byte_t opcode)
         rst(0x38);
         break;
     case 0xfd:
-        call;
+        call();
         break;
     default:
         std::cout << "*** Instruction not implemented " << memory::memory[PC] << std::endl;
@@ -1203,6 +1191,11 @@ byte_t i8080::get_register_l()
     return L;
 }
 
+byte_t i8080::get_register_h()
+{
+    return H;
+}
+
 int i8080::get_cycles()
 {
     return cycles;
@@ -1216,32 +1209,36 @@ byte_t *i8080::memory_addr()
 void i8080::load_file_bin(std::string name, byte_t *load, word_t jump)
 {
     std::fstream file(name, std::ios::binary);
-    int size = 0;
+    word_t size = 0;
     PC = jump;
 
-    memset(memory::memory, 0, 0x10000);
+    memset(memory::memory, 0x00, MAX_MEMORY);
 
     file.open(name);
-    if (file.is_open())
+    try
     {
-        while (!file.eof())
+        if (file.is_open())
         {
-            file.read((char *)load + jump, 1028);
-            size += file.gcount();
-            load += size;
-            if (size > MAX_MEMORY)
+            while (!file.eof())
             {
-                std::cout << "*** memory not supported, memory intel this suport 65536c " << std::endl;
-                exit(1);
+                file.read((char *)load + PC, 1028);
+                size += file.gcount();
+                load += file.gcount();
+                if (size > MAX_MEMORY)
+                    throw std::runtime_error("Memory not supported, memory intel this suport 65536d");
             }
+            std::cout << "*** File " << name << std::endl
+                      << "*** size " << size << std::endl
+                      << "*** jumped " << PC << "d" << std::endl
+                      << std::endl;
         }
-        std::cout << "*** file " << name << " loaded size " << size << ", memory jumped to " << PC << std::endl
-                  << std::endl;
+        else
+            throw std::runtime_error("File not found or not permission for reading");
     }
-    else
+    catch (std::exception &error)
     {
-        std::cout << "*** file " << name << " not found or not permission for read" << std::endl;
-        exit(2);
+        std::cout << "*** Error " << error.what() << std::endl;
+        exit(EXIT_FAILURE);
     }
 }
 
