@@ -1,5 +1,15 @@
 // LIBRARY-i8080
 
+/*     ____________________________
+      /                           /\
+     /   Vitor Mob              _/ /\
+    /        Intel8080         / \/
+   /                           /\
+  /___________________________/ /
+  \___________________________\/
+   \ \ \ \ \ \ \ \ \ \ \ \ \ \ \
+*/
+
 // implementation following the pdfs above, fully commented code for study purposes
 // i'm doing an i8080 based implementation i'm changing some flags and registers
 // implementation focused on studying how the i8080 logic works
@@ -53,20 +63,24 @@ namespace memory
 {
     inline byte_t memory[MAX_MEMORY];
 
-    inline byte_t read_memory_byte(word_t addr){
+    inline byte_t read_memory_byte(word_t addr)
+    {
         return memory[addr];
     }
 
-    inline word_t read_memory_word(word_t addr){
+    inline word_t read_memory_word(word_t addr)
+    {
         return read_memory_byte(addr + 1) << 8 |
                read_memory_byte(addr);
     }
 
-    inline void write_memory_byte(word_t addr, byte_t data16){
+    inline void write_memory_byte(word_t addr, byte_t data16)
+    {
         memory[addr] = data16;
     }
 
-    inline void write_memory_word(word_t addr, word_t data16){
+    inline void write_memory_word(word_t addr, word_t data16)
+    {
         memory::write_memory_byte(addr, data16);
         memory::write_memory_byte(addr + 1, data16 >> 8);
     }
@@ -75,18 +89,15 @@ namespace memory
 typedef class instructions
 {
     protected:
-        // program status word 
+        // program status word
         byte_t PSW;
-        
-        // flags and accumulator
-        word_t AF; 
 
         // program counter, stack pointer
-        word_t PC, SP;
+        word_t PC, SP, AF;
 
         // registers
         byte_t A, C, H, L, B, D, E;
-        word_t BC, HL, DE; //  pairs of registers 
+        word_t BC, HL, DE; //  pairs of registers
 
         // flags
         bool AC, SF, CF, PF, ZF;
