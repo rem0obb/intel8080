@@ -16,7 +16,8 @@ The Intel 8080 ("eighty-eighty") is the second 8-bit microprocessor designed and
 
 Source for tests in file [i8080_tests.cpp](src/intel8080/i8080_tests/i8080_tests.cpp),the intel8080 code is still undergoing tests due to some occurrences in the instructions. run tests execute `make` 
 
-> - [x] TEST.COM
+> - [x] 8080TST.COM
+> - [x] 8080PRE.COM
 
 
 ## References

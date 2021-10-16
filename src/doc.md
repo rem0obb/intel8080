@@ -1,3 +1,14 @@
+```
+     ____________________________
+    /                           /\
+   /   Vitor Mob              _/ /\
+  /        intel 8080       / \/
+ /                           /\
+/___________________________/ /
+\___________________________\/
+ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \
+
+```
 # Documentation
 
 In this part I will explain a little about the functions within the program, for study purposes, 

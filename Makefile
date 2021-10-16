@@ -2,7 +2,7 @@
 EXECUTE_TEST = ON # OFF 
 
 # variables to ambient 
-FLAGS=-Werror -std=c++17 -Wall
+FLAGS=-Werror -std=c++17 -Wall 
 CC:=c++ $(FLAGS)
 SRC=src
 TEST=$(SRC)/intel8080/i8080_tests
