@@ -126,8 +126,8 @@ typedef class instructions
         void jmp();
         void call();
         void rst(word_t addr);
-        byte_t inr(byte_t data8);
-        byte_t dcr(byte_t data8);
+        byte_t inr(word_t data16);
+        byte_t dcr(word_t data16);
 
         void port_out(byte_t data8, byte_t val);
         byte_t port_in(byte_t data8);
