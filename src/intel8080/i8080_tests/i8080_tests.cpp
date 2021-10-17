@@ -44,7 +44,7 @@ void execute_tests(std::string name)
         if (PC == 0)
             break;
     }
-    std::cout << "\n\n*** Cycles=" << cpu.get_cycles() << std::endl
+    std::cout << "\n\n*** Cycles=" << std::dec << cpu.get_cycles() << std::endl
               << "*** Instructions=" << instructions << std::endl
               << std::endl;
 }
