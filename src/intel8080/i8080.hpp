@@ -55,6 +55,7 @@
 #include <cstring>
 
 #define MAX_MEMORY 0x10000
+#define PORT_OUT 0
 
 typedef uint16_t word_t;
 typedef uint8_t byte_t;
@@ -89,6 +90,7 @@ namespace memory
 typedef class instructions
 {
     protected:
+        signed size_mem;
         // program status word
         byte_t PSW;
 
@@ -96,14 +98,14 @@ typedef class instructions
         word_t PC, SP, AF;
 
         // registers
-        byte_t A, C, H, L, B, D, E;
+        byte_t A, C, H, L, B, D, E, V;
         word_t BC, HL, DE; //  pairs of registers
 
         // flags
         bool AC, SF, CF, PF, ZF;
 
         // variables to save results and retrieve
-        int cycles;
+        int cycles; // count cycles 
         word_t data16;
         byte_t data8;
         bool flags;
@@ -114,11 +116,10 @@ typedef class instructions
 
         // instructions
         void add(word_t data16);
-        void adc(word_t data16);
         void dad(word_t data16);
         void sub(word_t data16);
         void sbb(word_t data16);
-        void cmp(word_t data16);
+        void cmp(byte_t data8);
         void ana(word_t data16);
         void ora(word_t data16);
         void xra(word_t data16);
@@ -126,8 +127,8 @@ typedef class instructions
         void jmp();
         void call();
         void rst(word_t addr);
-        byte_t inr(byte_t data8);
-        byte_t dcr(byte_t data8);
+        word_t inr(word_t data16);
+        word_t dcr(word_t data16);
 
         void port_out(byte_t data8, byte_t val);
         byte_t port_in(byte_t data8);
@@ -137,7 +138,7 @@ typedef class instructions
         void set_de(word_t data16);
         word_t get_bc();
         word_t get_hl();
-        word_t get_de();
+        word_t get_de();        
 
 } Instructions;
 
@@ -159,11 +160,14 @@ typedef class Microprocessor : protected Instructions
         byte_t get_register_l();
         byte_t get_register_h();
         int get_cycles();
+        signed get_size_mem();
         byte_t *memory_addr();
 
         void load_file_bin(std::string name, byte_t *load, word_t jump);
-        void i8080_init();
         void i8080_instructions();
+
+        Microprocessor();
+        ~Microprocessor();
 
 } i8080;
 
