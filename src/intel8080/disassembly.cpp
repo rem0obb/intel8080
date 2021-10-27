@@ -820,6 +820,7 @@ void Disassembly::file_save_disass(byte_t __opcode, word_t __pc)
 Disassembly::~Disassembly()
 {
     file_disass.close();
+    file_mem.close();
 }
 
 Disassembly::Disassembly()
