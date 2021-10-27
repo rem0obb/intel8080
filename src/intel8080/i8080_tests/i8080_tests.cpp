@@ -4,53 +4,78 @@
 // if you wanted to send a pull stay a I will analyze them all
 
 #include "i8080.hpp"
+#include "disassembly.hpp"
+
 #include <time.h>
+
+#define DISASSEMBLY false
+
+static void banner()
+{
+    std::cout << "       ____________________________    " << std::endl;
+    std::cout << "      /                           /\\  " << std::endl;
+    std::cout << "     /   Vitor Mob              _/ /\\ " << std::endl;
+    std::cout << "    /        Intel8080         / \\    " << std::endl;
+    std::cout << "   /                           /\\     " << std::endl;
+    std::cout << "  /___________________________/ /      " << std::endl;
+    std::cout << "  \\___________________________\\/     " << std::endl;
+    std::cout << "   \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ " << std::endl
+              << std::endl;
+}
 
 void execute_tests(std::string name)
 {
-    i8080 cpu;
-    cpu.i8080_init(); // inicializing flags
+    i8080 *cpu = new i8080();
+    Disassembly *disass = new Disassembly();
 
-    byte_t *mem = cpu.memory_addr();
+    byte_t *mem = cpu->memory_addr(); // memory
+    // registers
     word_t PC = 0;
     word_t DE = 0;
     byte_t E = 0;
     byte_t C = 0;
 
-    cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
-    int instructions = 0;                // counter instructions
+    cpu->load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
+    int instructions = 0;                 // counter instructions
 
-    mem[5] = 0xc9;
-
+    mem[0x0005] = 0xc9; // inject memory call 5
     while (true)
     {
-        PC = cpu.get_pc();
-        E = cpu.get_register_e();
-        C = cpu.get_register_c();
-        DE = cpu.get_register_de();
+        PC = cpu->get_pc();
+        E = cpu->get_register_e();
+        C = cpu->get_register_c();
+        DE = cpu->get_register_de();
 
         if (PC == 5)
         {
             if (C == 2)
                 std::cout.put(E);
-            if (C == 9)
-                for (int i = DE; mem[i] != '$'; i++)
+            else if (C == 9)
+                for (int i = DE; mem[i] != 0x24; i++)
                     std::cout.put(mem[i]);
         }
 
-        cpu.i8080_instructions();
         instructions++;
-
-        if (PC == 0)
+        cpu->i8080_instructions();
+        if (DISASSEMBLY == true)
+        {
+            disass->run_disassembly(PC, mem);
+            disass->run_memory(mem, cpu->get_size_mem());
+        }
+        if (PC == 0 || mem[PC] == 0x76)
             break;
     }
-    std::cout << "\n\n*** Cycles=" << cpu.get_cycles() << std::endl
-              << "*** Instructions=" << instructions << std::endl
-              << std::endl;
+
+    std::cout << "\n\n*** Cycles=" << std::dec << cpu->get_cycles() << std::endl
+              << "*** Instructions=" << instructions << std::endl;
+
+    delete disass;
+    delete cpu;
 }
 
 int main()
 {
+    banner();
 
     clock_t start = clock();
 
@@ -59,7 +84,7 @@ int main()
 
     clock_t result = clock() - start;
 
-    std::cout << "*** runtime=" << result << " ms" << std::endl;
+    std::cout << "\n*** Runtime=" << result << " ms" << std::endl;
 
     return EXIT_SUCCESS;
 }
