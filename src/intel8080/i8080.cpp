@@ -7,7 +7,7 @@
    /                           /\
   /___________________________/ /
   \___________________________\/
-   \ \ \ \ \ \ \ \ \ \ \ \ \ \ \  
+   \ \ \ \ \ \ \ \ \ \ \ \ \ \ \
 */
 
 // implementation following the pdfs above, fully commented code for study purposes
@@ -47,7 +47,7 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-#include <i8080.hpp>
+#include "i8080.hpp"
 
 // cycles intel 8080 variables 4, 5, 7, 10, or 11 cycles
 inline static constexpr byte_t cycles_opcode[256] = {
@@ -78,10 +78,10 @@ inline static constexpr byte_t cycles_opcode[256] = {
 inline static bool parity(byte_t n)
 {
     word_t p_count = 0;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i <= 8; i++)
         p_count += (n >> i) & 1;
 
-    return (p_count & 1) == 0;
+    return !(p_count & 1);
 }
 
 // instructions metod in class
@@ -93,34 +93,34 @@ void Instructions::push(word_t data16)
 
 word_t Instructions::pop()
 {
-    data16 = memory::read_memory_word(SP);
+    word_t mem = memory::read_memory_word(SP);
     SP += 2;
-    return data16;
+    return mem;
 }
 
 void Instructions::add(word_t data16)
 {
-    this->data16 = A + data16;
-    A  = this->data16 & 0xff;
-    CF = (this->data16 & 0x100) != 0;
-    AC = ((this->data16 >> 7) & 0x1) != 1;
-    PF = parity(A);
+    word_t work16 = A + data16;
+    A = work16 & 0xff;
+    CF = (work16 & 0x100) != 0;
+    AC = ((A >> 7) & 0x1) != 1;
     SF = (A & 0x80) != 0;
     ZF = (A == 0);
+    PF = parity(A);
 }
 
 void Instructions::dad(word_t data16)
 {
-    set_hl(data16 + get_hl());
-    CF = ((get_hl() + data16) >> 16) & 1;
+    CF = ((get_hl() + data16) >> 16) & 1;        
+    set_hl(get_hl() + data16);                       
 }
 
 void Instructions::sub(word_t data16)
 {
-    this->data16 = A - data16;
-    A = this->data16 & 0xff;
-    AC = ((this->data16 >> 7) & 0x1) != 1;
-    CF = !CF;
+    word_t work16 = A - data16;
+    A = work16 & 0xff;
+    AC = ((A >> 7) & 0x1) != 1;
+    CF = (work16 & 0x100) != 0;
     ZF = (A == 0);
     SF = (A & 0x80) != 0;
     PF = parity(A);
@@ -128,33 +128,34 @@ void Instructions::sub(word_t data16)
 
 void Instructions::sbb(word_t data16)
 {
-    this->data16 = (A - data16) - CF;
-    A = this->data16 & 0xff;
-    CF = !CF;
+    word_t work16 = (A - data16) - CF;
+    A = work16 & 0xff;
+    AC = ((A >> 7) & 0x1) != 1;
+    CF = (work16 & 0x100) != 0;
+    ZF = (A == 0);
     SF = (A & 0x80) != 0;
     PF = parity(A);
-    AC = ((this->data16 >> 7) & 0x1) != 1;
-    ZF = (A == 0);
 }
 
 void Instructions::cmp(byte_t data8)
 {
-    this->data16 = (A - data8);
-    CF = (data16 & 0x100) != 0;
-    SF = (this->data16 & 0x80) != 0;
-    ZF = (this->data16 & 0xff) == 0;
-    PF = parity(this->data16 & 0xff);
-    AC = ~((this->data16 >> 7) & 0x1) != 1;
+    word_t work16 = A - data8;
+    CF = work16 >> 8;
+    SF = (work16 & 0x80) != 0;
+    ZF = (work16 & 0xff) == 0;
+    PF = parity(work16 & 0xff);
+    AC = ((work16 >> 7) & 0x1) != 1;
 }
 
 void Instructions::ana(word_t data16)
 {
-    A &= data16;
-    CF = 0;
+    byte_t work16 = A & data16;
+    CF = work16 >> 8;
     AC = ((A | data16) & 0x08) != 0;
-    PF = parity(A & 0xff);
-    SF = (A & 0x80) != 0;
-    ZF = (A == 0);
+    ZF = (work16 & 0xff) == 0;
+    SF = (work16 & 0x80) != 0;
+    PF = parity(work16 & 0xff);
+    A = work16;
 }
 
 void Instructions::ora(word_t data16)
@@ -162,9 +163,9 @@ void Instructions::ora(word_t data16)
     A |= data16;
     CF = 0;
     AC = 0;
-    PF = parity(A & 0xff);
+    PF = parity(A);
     SF = (A & 0x80) != 0;
-    ZF = (A & 0xff) == 0;
+    ZF = A == 0;
 }
 
 void Instructions::xra(word_t data16)
@@ -172,18 +173,18 @@ void Instructions::xra(word_t data16)
     A ^= data16;
     CF = 0;
     AC = 0;
-    SF = (A & 0x80) != 0;
     PF = parity(A);
-    ZF = (A & 0xff) == 0;
+    SF = (A & 0x80) != 0;
+    ZF = A == 0;
 }
 
 void Instructions::ret()
-{ 
+{
     PC = pop();
 }
 
 void Instructions::jmp()
-{ 
+{
     PC = memory::read_memory_word(PC);
 }
 
@@ -195,98 +196,131 @@ void Instructions::call()
 
 void Instructions::rst(word_t addr)
 {
-    push(PC + 2);
+    push(PC);
     PC = addr;
 }
 
-word_t Instructions::inr(word_t data16)
+word_t Instructions::inr(byte_t data16)
 {
-    this->data16 = data16 + 1;
-    PF = parity(this->data16 & 0xff);
-    SF = (this->data16 & 0x80) != 0;
-    ZF = ((this->data16 & 0xff) == 0);
-    AC = (this->data16 & 0xf) == 0;
+    word_t work16 = data16 + 1;
+    PF = parity(data16);
+    SF = (work16 & 0x80) != 0;
+    ZF = ((work16 & 0xff) == 0);
+    AC = (work16 & 0xf) == 0;
 
-    return this->data16;
+    return work16;
 }
 
-word_t Instructions::dcr(word_t data16)
+word_t Instructions::dcr(byte_t data16)
 {
-    this->data16 = data16 - 1;
-    PF = parity(this->data16 & 0xff);
-    SF = (this->data16 & 0x80) != 0;
-    ZF = ((this->data16 & 0xff) == 0);
-    AC = !(this->data16 & 0xf) == 0;
+    word_t work16 = data16 - 1;
+    PF = parity(data16);
+    SF = (work16 & 0x80) != 0;
+    ZF = ((work16 & 0xff) == 0);
+    AC = !((work16 & 0xf) == 0x0f);
 
-    return this->data16;
+    return work16;
+}
+
+void Instructions::daa()
+{
+    word_t work16 = 0;
+    bool flag = 0;
+    if (AC || (A & 0xf) > 9)
+        work16 |= 0x06;
+    if (CF || (A >> 4) > 9 || ((A >> 4) >= 9 && (A & 0x0f) > 9))
+    {
+        work16 += 0x60;
+        flag = 1;
+    }
+    add(work16);
+    CF = flag;
+}
+
+void Instructions::xthl()
+{
+    word_t work16 = memory::read_memory_word(SP);
+    memory::write_memory_word(SP, get_hl());
+    set_hl(work16);
+}
+
+void Instructions::xchg()
+{
+    word_t work16 = get_de();
+    set_de(get_hl());
+    set_hl(work16);
+}
+
+void Instructions::ral()
+{
+    bool flag = CF;
+    CF = A >> 0x07;
+    A = (A << 0x01) | flag;
+}
+
+void Instructions::rar()
+{
+    bool flag = CF;
+    CF = A & 0x01;
+    A = (A >> 1) | (flag << 7);
 }
 
 byte_t Instructions::port_in(byte_t data8)
-{ 
-    return 0;
+{
+    return EXIT_SUCCESS;
 }
 
 void Instructions::port_out(byte_t data8, byte_t val)
-{ 
-
-} 
+{
+}
 
 void Instructions::set_bc(word_t data16)
 {
-    BC = data16;
-    B = BC >> 8;
-    C = BC & 0xff;
+    B = data16 >> 8;
+    C = data16 & 0xff;
 }
 
 void Instructions::set_hl(word_t data16)
 {
-    HL = data16;
-    H = HL >> 8;
-    L = HL & 0xff;
+    H = data16 >> 8;
+    L = data16 & 0xff;
 }
 
 void Instructions::set_de(word_t data16)
 {
-    DE = data16;
-    D = DE >> 8;
-    E = DE & 0xff;
+    D = data16 >> 8;
+    E = data16 & 0xff;
 }
 
 word_t Instructions::get_bc()
 {
-    BC = (B << 8) | C;
-    return BC;
+    return (B << 8) | C;
 }
 
 word_t Instructions::get_hl()
 {
-    HL = (H << 8) | L;
-    return HL;
+    return (H << 8) | L;
 }
 
 word_t Instructions::get_de()
 {
-    DE = (D << 8) | E;
-    return DE;
+    return (D << 8) | E;
 }
 
 void i8080::flags_init()
 {
-    PSW = 0; 
-    
+    PSW = 0;
+
     PC = 0, SP = 0;
 
     A = 0, C = 0, H = 0, L = 0, B = 0, D = 0, E = 0;
-    BC = 0, DE = 0, BC = 0;
 
     AC = 0, SF = 0, CF = 0, PF = 0, ZF = 0;
 
     cycles = 0;
-    data16 = 0;
-    data8 = 0;
 }
 
-void i8080::execute_opcode(byte_t opcode)
+void i8080::execute_opcode(byte_t opcode) noexcept
 {
     cycles += cycles_opcode[opcode];
 
@@ -333,8 +367,7 @@ void i8080::execute_opcode(byte_t opcode)
         A = memory::read_memory_byte(get_bc());
         break;
     case 0x0b: // dcx  bc
-        data16 = get_bc() - 1;
-        set_bc(data16);
+        set_bc(get_bc() - 1);
         break;
     case 0x0c: // inr c
         C = inr(C);
@@ -354,10 +387,10 @@ void i8080::execute_opcode(byte_t opcode)
         PC += 2;
         break;
     case 0x12: // stax de
-        memory::write_memory_byte(get_de(), A); 
+        memory::write_memory_byte(get_de(), A);
         break;
     case 0x13: // inx de
-        set_de(get_de() + 1); 
+        set_de(get_de() + 1);
         break;
     case 0x14: // inr d
         D = inr(D);
@@ -366,20 +399,18 @@ void i8080::execute_opcode(byte_t opcode)
         D = dcr(D);
         break;
     case 0x16: // mvi d, d8
-        D = memory::read_memory_byte(PC++); 
+        D = memory::read_memory_byte(PC++);
         break;
     case 0x17: // ral
-        flags = CF;
-        CF = A >> 0x07; 
-        A = (A << 0x01) | flags;
+        ral();
         break;
     case 0x19: // dad d
         dad(get_de());
         break;
     case 0x1a: // ldax d
-        A = memory::read_memory_byte(get_de()); 
+        A = memory::read_memory_byte(get_de());
         break;
-    case 0x1b: // inr de
+    case 0x1b: // dcx de
         set_de(get_de() - 1);
         break;
     case 0x1c: // inr e
@@ -389,20 +420,17 @@ void i8080::execute_opcode(byte_t opcode)
         E = dcr(E);
         break;
     case 0x1e: // mvi e, d8
-        E = memory::read_memory_byte(PC++); 
+        E = memory::read_memory_byte(PC++);
         break;
     case 0x1f: // rar
-        flags = CF;
-        CF = A & 0x01; 
-        A = (A >> 1) | (flags << 7);
+        rar();
         break;
     case 0x21: // lxi hl
-        data16 = memory::read_memory_word(PC);
-        set_hl(data16);
+        set_hl(memory::read_memory_word(PC));
         PC += 2;
         break;
     case 0x22: // shld
-        memory::write_memory_word(memory::read_memory_word(PC), get_hl()); 
+        memory::write_memory_word(memory::read_memory_word(PC), get_hl());
         PC += 2;
         break;
     case 0x23: // inx h
@@ -415,32 +443,20 @@ void i8080::execute_opcode(byte_t opcode)
         H = dcr(H);
         break;
     case 0x26: // mvi h, d8
-        H = memory::read_memory_byte(PC++); 
+        H = memory::read_memory_byte(PC++);
         break;
     case 0x27: // daa
-        if (AC || (A & 0xf) > 9)
-            A += 0x06;
-        if (CF || (A >> 4) > 9)
-        {
-            A += 0x60;
-            flags = true;
-        }
-        parity(A & 0xff);
-        ZF = (A & 0xff) == 0;
-        SF = (A & 0x80) != 0;
-        AC = ((A >> 7) & 0x1) != 1;
-        CF = flags;
+        daa();
         break;
     case 0x29: // dad h
         dad(get_hl());
         break;
     case 0x2a: // lhld
-        set_hl(memory::read_memory_word(memory::read_memory_word(PC))); 
+        set_hl(memory::read_memory_word(memory::read_memory_word(PC)));
         PC += 2;
         break;
     case 0x2b: // dcx h
-        data16 = get_hl() - 1;
-        set_hl(data16);
+        set_hl(get_hl() - 1);
         break;
     case 0x2c: // inr l
         L = inr(L);
@@ -452,28 +468,28 @@ void i8080::execute_opcode(byte_t opcode)
         L = memory::read_memory_byte(PC++);
         break;
     case 0x2f: // cma, if A = 51H converting for aeh
-        A = ~A; 
+        A = ~A;
         break;
     case 0x31: // lxi sp
         SP = memory::read_memory_word(PC);
         PC += 2;
         break;
     case 0x32: // sta addr
-        data16 = memory::read_memory_word(PC);
-        memory::write_memory_byte(data16, A);
+        memory::write_memory_byte(memory::read_memory_word(PC), A);
         PC += 2;
         break;
     case 0x33: // inx sp
-        SP++; 
+        SP++;
         break;
-    case 0x34: 
+    case 0x34:
         memory::write_memory_word(get_hl(), inr(memory::read_memory_byte(get_hl())));
         break;
     case 0x35:
         memory::write_memory_word(get_hl(), dcr(memory::read_memory_byte(get_hl())));
         break;
     case 0x36: // mvi h, d8
-        memory::write_memory_byte(get_hl(), memory::read_memory_byte(PC++)); 
+        memory::write_memory_byte(get_hl(), memory::read_memory_byte(PC));
+        PC++;
         break;
     case 0x37:
         CF = 1;
@@ -482,11 +498,11 @@ void i8080::execute_opcode(byte_t opcode)
         dad(SP);
         break;
     case 0x3a: // lda adr
-        A = memory::read_memory_byte(memory::read_memory_word(PC)); 
+        A = memory::read_memory_byte(memory::read_memory_word(PC));
         PC += 2;
         break;
     case 0x3b:
-        SP--; // dcx sp
+        SP -= 1; // dcx sp
         break;
     case 0x3c:
         A = inr(A);
@@ -943,7 +959,7 @@ void i8080::execute_opcode(byte_t opcode)
         add(memory::read_memory_byte(PC++) + CF);
         break;
     case 0xcf:
-        rst(0x01);
+        rst(0x08);
         break;
     case 0xd0:
         if (!CF)
@@ -1021,9 +1037,7 @@ void i8080::execute_opcode(byte_t opcode)
             PC += 2;
         break;
     case 0xe3: // xthl
-        data16 = memory::read_memory_word(SP);
-        memory::write_memory_word(SP, get_hl());
-        set_hl(data16);
+        xthl();
         break;
     case 0xe4: // cpo
         if (!PF)
@@ -1054,9 +1068,7 @@ void i8080::execute_opcode(byte_t opcode)
             PC += 2;
         break;
     case 0xeb: // xchg
-        data16 = get_de(); 
-        set_de(get_hl());
-        set_hl(data16);
+        xchg();
         break;
     case 0xec:
         if (PF)
@@ -1077,15 +1089,15 @@ void i8080::execute_opcode(byte_t opcode)
         if (!SF)
             ret();
         break;
-    case 0xf1: 
-        AF  = pop();
-        A   = AF >> 8;
+    case 0xf1:
+        AF = pop();
+        A = AF >> 8;
         PSW = AF & 0xff;
-        SF  = (PSW >> 0x7) & 0x1;
-        ZF  = (PSW >> 0x6) & 0x1;
-        AC  = (PSW >> 0x4) & 0x1;
-        PF  = (PSW >> 0x2) & 0x1;
-        CF  = (PSW >> 0x0) & 0x1;
+        SF = ((PSW >> 0x7) & 0x1);
+        ZF = ((PSW >> 0x6) & 0x1);
+        AC = ((PSW >> 0x4) & 0x1);
+        PF = ((PSW >> 0x2) & 0x1);
+        CF = ((PSW >> 0x0) & 0x1);
         break;
     case 0xf2:
         if (!SF)
@@ -1119,7 +1131,7 @@ void i8080::execute_opcode(byte_t opcode)
         if (SF)
             ret();
         break;
-    case 0xf9:
+    case 0xf9: // sphl
         SP = get_hl();
         break;
     case 0xfa:
@@ -1215,7 +1227,6 @@ signed i8080::get_size_mem()
     return size_mem;
 }
 
-
 void i8080::load_file_bin(std::string name, byte_t *load, word_t jump)
 {
     std::fstream file(name, std::ios::binary);
@@ -1229,28 +1240,30 @@ void i8080::load_file_bin(std::string name, byte_t *load, word_t jump)
         file.open(name);
         if (file.is_open())
         {
+            if(file.eof())
+                throw std::runtime_error("File " + name + " empty");
+            
             while (!file.eof())
             {
                 file.read((char *)load + PC, 1028);
                 size_mem += file.gcount();
                 load += file.gcount();
-                
+
                 if (size_mem >= MAX_MEMORY || MAX_MEMORY != 0x10000)
                     throw std::runtime_error("Memory not supported, memory intel this suport 65536d");
-                else if (size_mem == 0)
-                    throw std::runtime_error("File " + name + " empty");
             }
-            std::cout << "******************************************************" << std::endl;           
+            std::cout << "******************************************************" << std::endl;
             std::cout << "*** File " << name << std::endl
                       << "*** Size " << size_mem << " bytes" << std::endl
-                      << "*** Jumped 0x" << std::hex << PC << std::endl << std::endl;
+                      << "*** Jumped 0x" << std::hex << PC << std::endl
+                      << std::endl;
         }
         else
             throw std::runtime_error("File not found or not permission for reading");
     }
     catch (std::exception &error)
     {
-        std::cout << "*** Error " << error.what() << std::endl;
+        std::cerr << "*** Error " << error.what() << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -1269,4 +1282,5 @@ Microprocessor::Microprocessor()
 }
 
 Microprocessor::~Microprocessor()
-{  }
+{
+}

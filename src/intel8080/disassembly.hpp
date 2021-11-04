@@ -41,27 +41,27 @@
 
 #define __file_disass__ "src/intel8080/utils/disassembly.asm"
 #define __file_mem__ "src/intel8080/utils/memory.bin"
-#define MAX_MEMORY 0x10000
+#define MAX_MEMORY 0x10000L
 
 typedef uint16_t word_t;
 typedef uint8_t byte_t;
 
 class Disassembly
 {
-private:
-    std::string execute_opcode(byte_t __opcode, word_t __pc);
-    byte_t read_memory(word_t __addr, byte_t *__mem);
-    void file_save_disass(byte_t __opcode, word_t __pc);
+    private:
+        std::string execute_opcode(byte_t __opcode, word_t __pc) noexcept;
+        byte_t read_memory(word_t __addr, byte_t *__mem);
+        void file_save_disass(byte_t __opcode, word_t __pc);
 
-public:
-    std::ofstream file_disass;
-    std::ofstream file_mem;
+    public:
+        std::ofstream file_disass;
+        std::ofstream file_mem;
 
-    void create_file();
-    Disassembly();
-    ~Disassembly();
-    void run_disassembly(word_t __pc, byte_t *__mem);
-    void run_memory(byte_t *__mem, signed __size);
+        void create_file();
+        Disassembly();
+        ~Disassembly();
+        void run_disassembly(word_t __pc, byte_t *__mem);
+        void run_memory(byte_t *__mem, signed __size);
 };
 
 #endif // ! disass_h

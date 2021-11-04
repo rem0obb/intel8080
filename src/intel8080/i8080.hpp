@@ -54,7 +54,7 @@
 #include <iostream>
 #include <cstring>
 
-#define MAX_MEMORY 0x10000
+#define MAX_MEMORY 0x10000L
 #define PORT_OUT 0
 
 typedef uint16_t word_t;
@@ -98,17 +98,13 @@ typedef class instructions
         word_t PC, SP, AF;
 
         // registers
-        byte_t A, C, H, L, B, D, E, V;
-        word_t BC, HL, DE; //  pairs of registers
+        byte_t A, C, H, L, B, D, E;
 
         // flags
         bool AC, SF, CF, PF, ZF;
 
         // variables to save results and retrieve
         int cycles; // count cycles 
-        word_t data16;
-        byte_t data8;
-        bool flags;
 
         // stack manipulation
         void push(word_t data16);
@@ -127,8 +123,13 @@ typedef class instructions
         void jmp();
         void call();
         void rst(word_t addr);
-        word_t inr(word_t data16);
-        word_t dcr(word_t data16);
+        word_t inr(byte_t data16);
+        word_t dcr(byte_t data16);
+        void daa();
+        void xthl();
+        void xchg();
+        void ral();
+        void rar();
 
         void port_out(byte_t data8, byte_t val);
         byte_t port_in(byte_t data8);
@@ -146,7 +147,7 @@ typedef class Microprocessor : protected Instructions
 {
     private:
         void flags_init();
-        void execute_opcode(byte_t opcode);
+        void execute_opcode(byte_t opcode) noexcept;
 
     public:
         byte_t get_register_c();

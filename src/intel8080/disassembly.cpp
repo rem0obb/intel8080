@@ -32,7 +32,7 @@
 
 #include "disassembly.hpp"
 
-std::string Disassembly::execute_opcode(byte_t __opcode, word_t __pc)
+std::string Disassembly::execute_opcode(byte_t __opcode, word_t __pc) noexcept
 {
     std::stringstream instruction_str;
     switch (__opcode)
@@ -837,5 +837,5 @@ void Disassembly::run_disassembly(word_t __pc, byte_t *__mem)
 void Disassembly::run_memory(byte_t *__mem, signed __size)
 {
     for(signed i = 0; i <= __size; i++)
-        file_mem << __mem[i];
+        file_mem << std::hex << __mem[i] << std::endl;
 }

@@ -3,8 +3,8 @@
 // to the intel 8080, an example would be an overflow flag...
 // if you wanted to send a pull stay a I will analyze them all
 
-#include "i8080.hpp"
-#include "disassembly.hpp"
+#include "../i8080.hpp"
+#include "../disassembly.hpp"
 
 #include <time.h>
 
@@ -38,7 +38,8 @@ void execute_tests(std::string name)
     cpu->load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
     int instructions = 0;                 // counter instructions
 
-    mem[0x0005] = 0xc9; // inject memory call 5
+    mem[0x00005] = 0xc9;
+
     while (true)
     {
         PC = cpu->get_pc();
