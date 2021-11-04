@@ -100,7 +100,6 @@ in the [book]( https://altairclone.com/downloads/manuals/8080%20Programmers%20Ma
   * adds the contents of the hl record pair, and the result is e hl
 
 * void jmp()
-
     * will push memory with PC content
     and then jump to PC's incremented address + 2
 
@@ -132,4 +131,13 @@ void call();
 
 * word_t dcr(word_t data16)
   * decrement register - 1  the affected flags will be Z,S,P,AC
-  
+* void daa();
+
+* void xthl();
+
+* void xchg();
+
+* void ral();
+
+* void rar();
+
