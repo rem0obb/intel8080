@@ -1,8 +1,8 @@
 # variable for execute tests 
-EXECUTE_TEST = ON # OFF 
+EXECUTE_TEST = OFF # OFF 
 
 # variables to ambient 
-FLAGS=-O2  -std=c++17 -Wall
+FLAGS=-O2  -std=c++17 -Wall -Werror 
 CC:=c++ $(FLAGS)
 SRC=src
 TEST=$(SRC)/intel8080/i8080_tests
@@ -16,8 +16,8 @@ all: install
 install:
 
 	@ mkdir -p $(OBJS)
-	@ $(CC) -c $(INCLUDE)/i8080.cpp -I $(INCLUDE)/ -o $(OBJS)/i8080.o
 	@ $(CC) -c $(INCLUDE)/disassembly.cpp -I $(INCLUDE)/ -o $(OBJS)/disassembly.o 
+	@ $(CC) -c $(INCLUDE)/i8080.cpp -I $(INCLUDE)/ -o $(OBJS)/i8080.o
 
 	@ $(CC) -g $(TEST)/i8080_tests.cpp $(OBJS)/*.o -I $(INCLUDE)/ -o $(TEST)/bin/i8080_tests
 
@@ -35,6 +35,6 @@ install:
 
 # remove files compileded
 clean:
-	@ rm -fr $(OBJS)  $(TEST)/bin/i8080_tests $(SRC)/intel8080/utils/disassembly.asm $(SRC)/intel8080/utils/memory.bin
+	@ rm -fr $(OBJS)  $(TEST)/bin/i8080_tests $(SRC)/intel8080/utils/disassembly.asm $(SRC)/intel8080/utils/memory.bin $(SRC)/intel8080/utils/memory.bin
 run:
 	@ $(TEST)/bin/i8080_tests
