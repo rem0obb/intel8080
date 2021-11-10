@@ -101,7 +101,7 @@ typedef class instructions
         byte_t A, C, H, L, B, D, E;
 
         // flags
-        bool AC, SF, CF, PF, ZF;
+        bool AC : 1, SF : 1, CF : 1 , PF : 1, ZF : 1;
 
         // variables to save results and retrieve
         int cycles; // count cycles 
