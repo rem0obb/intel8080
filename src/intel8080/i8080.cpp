@@ -111,8 +111,8 @@ void Instructions::add(word_t data16)
 
 void Instructions::dad(word_t data16)
 {
-    CF = ((get_hl() + data16) >> 16) & 1;        
-    set_hl(get_hl() + data16);                       
+    CF = ((get_hl() + data16) >> 16) & 1;
+    set_hl(get_hl() + data16);
 }
 
 void Instructions::sub(word_t data16)
@@ -196,7 +196,7 @@ void Instructions::call()
 
 void Instructions::rst(word_t addr)
 {
-    push(PC);
+    push(PC + 2);
     PC = addr;
 }
 
@@ -1234,26 +1234,26 @@ void i8080::load_file_bin(std::string name, byte_t *load, word_t jump)
 
     try
     {
+        if(MAX_MEMORY != 0x10000L)
+            throw std::runtime_error("Memory not supported, memory intel this suport 65536d");
+
         size_mem = 0;
         PC = jump;
 
         file.open(name);
         if (file.is_open())
         {
-            if(file.eof())
+            if (file.peek() == std::ifstream::traits_type::eof())
                 throw std::runtime_error("File " + name + " empty");
-            
+
             while (!file.eof())
             {
                 file.read((char *)load + PC, 1028);
                 size_mem += file.gcount();
                 load += file.gcount();
-
-                if (size_mem >= MAX_MEMORY || MAX_MEMORY != 0x10000)
-                    throw std::runtime_error("Memory not supported, memory intel this suport 65536d");
             }
-            std::cout << "******************************************************" << std::endl;
-            std::cout << "*** File " << name << std::endl
+            std::cout << "******************************************************" << std::endl
+                      << "*** File " << name << std::endl
                       << "*** Size " << size_mem << " bytes" << std::endl
                       << "*** Jumped 0x" << std::hex << PC << std::endl
                       << std::endl;
