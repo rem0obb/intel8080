@@ -90,7 +90,10 @@ namespace memory
 typedef class instructions
 {
     protected:
+        
+        // variable in size of loaded in memory intell
         signed size_mem;
+
         // program status word
         byte_t PSW;
 
