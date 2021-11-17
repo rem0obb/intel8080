@@ -739,7 +739,7 @@ std::string Disassembly::execute_opcode(byte_t __opcode, word_t __pc) noexcept
             instruction_str << "0xed.....call";
             break;
         case 0xee:
-            instruction_str << "0xee..........xra d8";
+            instruction_str << "0xee.....xra d8";
             break;
         case 0xef:
             instruction_str << "0xef.....rst 0x28";
