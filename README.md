@@ -19,7 +19,10 @@ Source for tests in file [i8080_tests.cpp](src/intel8080/i8080_tests/i8080_tests
 > - [x] 8080TST.COM
 > - [x] 8080PRE.COM
 
+## Disassembly
+the disassembly of the instructions must be activated by the DISASSEMBLY macro, it will generate a disassembly of the instructions being executed in real time.
 
+![disassembly](img/disass.gif)
 ## References
 
  
