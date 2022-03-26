@@ -18,7 +18,8 @@ install:
 	@ mkdir -p $(OBJS) $(INCLUDE)/utils
 	@ $(CC) -c $(INCLUDE)/disassembly.cpp -I $(INCLUDE)/ -o $(OBJS)/disassembly.o 
 	@ $(CC) -c $(INCLUDE)/i8080.cpp -I $(INCLUDE)/ -o $(OBJS)/i8080.o
-
+	
+	@ $(CC) -g $(SRC)/intel8080/bin/main.cpp $(OBJS)/*.o -I $(INCLUDE)/ -o intel8080
 	@ $(CC) -g $(TEST)/i8080_tests.cpp $(OBJS)/*.o -I $(INCLUDE)/ -o $(TEST)/bin/i8080_tests
 
 	@ echo "*** compiled "
@@ -35,6 +36,6 @@ install:
 
 # remove files compileded
 clean:
-	@ rm -fr $(OBJS)  $(TEST)/bin/i8080_tests $(SRC)/intel8080/utils/disassembly.asm $(SRC)/intel8080/utils/memory.bin $(SRC)/intel8080/utils/memory.bin $(INCLUDE)/utils
+	@ rm -fr $(OBJS) intel8080 $(TEST)/bin/i8080_tests $(SRC)/intel8080/utils/disassembly.asm $(SRC)/intel8080/utils/memory.bin $(SRC)/intel8080/utils/memory.bin $(INCLUDE)/utils
 run:
 	@ $(TEST)/bin/i8080_tests
