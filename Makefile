@@ -1,5 +1,5 @@
 # variable for execute tests 
-EXECUTE_TEST = OFF # OFF 
+EXECUTE_TEST = ON # OFF 
 
 # variables to ambient 
 FLAGS=-O2  -std=c++17 -Wall -Werror 

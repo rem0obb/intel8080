@@ -23,29 +23,29 @@ static void banner()
               << std::endl;
 }
 
-void execute_tests(std::string name)
+const static void execute_tests(const std::string &name)
 {
-    i8080 *cpu = new i8080();
-    Disassembly *disass = new Disassembly();
+    i8080 cpu;
+    Disassembly disass;
 
-    byte_t *mem = cpu->memory_addr(); // memory
+    byte_t *mem = cpu.memory_addr(); // memory
     // registers
-    word_t PC = 0;
-    word_t DE = 0;
-    byte_t E = 0;
-    byte_t C = 0;
+    word_t PC; 
+    word_t DE;
+    byte_t E;
+    byte_t C;
 
-    cpu->load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
+    cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
     int instructions = 0;                 // counter instructions
 
     mem[0x00005] = 0xc9;
 
     while (true)
     {
-        PC = cpu->get_pc();
-        E = cpu->get_register_e();
-        C = cpu->get_register_c();
-        DE = cpu->get_register_de();
+        PC = cpu.get_pc();
+        E = cpu.get_register_e();
+        C = cpu.get_register_c();
+        DE = cpu.get_register_de();
 
         if (PC == 5)
         {
@@ -57,21 +57,19 @@ void execute_tests(std::string name)
         }
 
         instructions++;
-        cpu->i8080_instructions();
+        cpu.i8080_instructions();
         if (DISASSEMBLY == true)
         {
-            disass->run_disassembly(PC, mem);
-            disass->run_memory(mem, cpu->get_size_mem());
+            disass.run_disassembly(PC, mem);
+            disass.run_memory(mem, cpu.get_size_mem());
         }
         if (PC == 0 || mem[PC] == 0x76)
             break;
     }
 
-    std::cout << "\n\n*** Cycles=" << std::dec << cpu->get_cycles() << std::endl
+    std::cout << "\n\n*** Cycles=" << std::dec << cpu.get_cycles() << std::endl
               << "*** Instructions=" << instructions << std::endl;
 
-    delete disass;
-    delete cpu;
 }
 
 int main()
