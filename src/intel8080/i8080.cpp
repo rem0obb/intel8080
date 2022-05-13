@@ -103,15 +103,34 @@ static constexpr byte_t cycles_opcode[256] =
 
 };
 
+//
+// Implementation: Frederico Pissarra
+// 
 // The Parity bit is set to 1 for even parity, and is reset to 0 for odd parity
-inline static bool parity ( byte_t n )
+#define EVEN_PARITY(x) ((~(x ^= (x ^= (x ^= x >> 4) >> 2) >> 1)) & 1)
+
+static inline bool parity( unsigned char b )
 {
-  word_t p_count = 0;
+#ifndef __GNUC__
+  // Se precisar de "portabilidade" (MSVC, por exemplo).
+  // Pior método!
+  return EVEN_PARITY( b );
+#else
+  #if defined( __i386 ) || defined( __x86_64 )
+    bool r;
 
-  for ( int i = 0; i <= 8; i++ )
-    p_count += ( n >> i ) & 1;
+    // Melhor método!
+    __asm__ __volatile__ (
+      "testb %1,%1\n\t"  // test afeta PF!
+      "setp %0"
+      : "=r" (r) : "r" (b)
+    );
 
-  return ! ( p_count & 1 );
+    return r;
+  #else
+    return __builtin_parity( b );
+  #endif
+#endif
 }
 
 // instructions metod in class
