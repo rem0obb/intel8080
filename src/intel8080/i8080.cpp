@@ -106,6 +106,7 @@ static constexpr byte_t cycles_opcode[256] =
 //
 // Implementation: Frederico Pissarra
 // 
+//
 // The Parity bit is set to 1 for even parity, and is reset to 0 for odd parity
 #define EVEN_PARITY(x) ((~(x ^= (x ^= (x ^= x >> 4) >> 2) >> 1)) & 1)
 
