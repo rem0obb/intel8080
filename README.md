@@ -12,6 +12,8 @@ The Intel 8080 ("eighty-eighty") is the second 8-bit microprocessor designed and
 
 > [About](utils/intel8080.pdf)
 
+> [Article in mente binaria](https://www.mentebinaria.com.br/artigos/emulando-o-intel-8080-r88/)
+
 ## Tests Performed
 
 Source for tests in file [i8080_tests.cpp](src/intel8080/i8080_tests/i8080_tests.cpp),the intel8080 code is still undergoing tests due to some occurrences in the instructions. run tests execute `make` 
@@ -38,3 +40,4 @@ the disassembly of the instructions must be activated by the DISASSEMBLY macro, 
  * https://github.com/begoon/i8080-core
 
  * https://en.wikipedia.org/wiki/Intel_8080
+ 
