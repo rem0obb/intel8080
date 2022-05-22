@@ -35,7 +35,7 @@ part that the user can use to develop some application on top of the emulator
     
     * will bring the value of the PC(Program Counter)
     
-* word_t get_register_hl()
+* word_t get_register_HL
   
     * will bring the value of the HL Tree Pair Register
   
@@ -133,7 +133,7 @@ void call();
   * decrement register - 1  the affected flags will be Z,S,P,AC
 * void daa();
 
-* void xthl();
+* void xtHL;
 
 * void xchg();
 

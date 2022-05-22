@@ -12,78 +12,82 @@
 
 static void banner()
 {
-    std::cout << "       ____________________________    " << std::endl;
-    std::cout << "      /                           /\\  " << std::endl;
-    std::cout << "     /   Vitor Mob              _/ /\\ " << std::endl;
-    std::cout << "    /        Intel8080         / \\    " << std::endl;
-    std::cout << "   /                           /\\     " << std::endl;
-    std::cout << "  /___________________________/ /      " << std::endl;
-    std::cout << "  \\___________________________\\/     " << std::endl;
-    std::cout << "   \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ " << std::endl
-              << std::endl;
+  std::cout << "       ____________________________    " << std::endl;
+  std::cout << "      /                           /\\  " << std::endl;
+  std::cout << "     /   Vitor Mob              _/ /\\ " << std::endl;
+  std::cout << "    /        Intel8080         / \\    " << std::endl;
+  std::cout << "   /                           /\\     " << std::endl;
+  std::cout << "  /___________________________/ /      " << std::endl;
+  std::cout << "  \\___________________________\\/     " << std::endl;
+  std::cout << "   \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ " << std::endl
+            << std::endl;
 }
 
 const static void execute_tests(const std::string &name)
 {
-    i8080 cpu;
-    Disassembly disass;
+  i8080 cpu;
+  Disassembly disass;
 
-    byte_t *mem = cpu.memory_addr(); // memory
-    // registers
-    word_t PC; 
-    word_t DE;
-    byte_t E;
-    byte_t C;
+  byte_t *mem = cpu.memory_addr(); // memory
+  // registers
+  word_t PC;
+  word_t DE;
+  byte_t E;
+  byte_t C;
 
-    cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
-    int instructions = 0;                 // counter instructions
+  cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
+  int instructions = 0;                // counter instructions
 
-    mem[0x00005] = 0xc9;
+  mem[0x00005] = 0xc9;
 
-    while (true)
+  while(true)
+  {
+    PC = cpu.get_pc();
+    E = cpu.get_register_e();
+    C = cpu.get_register_c();
+    DE = cpu.get_register_de();
+
+    //printf("%x\n", mem[PC]);
+
+    if (PC == 5)
     {
-        PC = cpu.get_pc();
-        E = cpu.get_register_e();
-        C = cpu.get_register_c();
-        DE = cpu.get_register_de();
-
-        if (PC == 5)
-        {
-            if (C == 2)
-                std::cout.put(E);
-            else if (C == 9)
-                for (int i = DE; mem[i] != 0x24; i++)
-                    std::cout.put(mem[i]);
-        }
-
-        instructions++;
-        cpu.i8080_instructions();
-        if (DISASSEMBLY == true)
-        {
-            disass.run_disassembly(PC, mem);
-            disass.run_memory(mem, cpu.get_size_mem());
-        }
-        if (PC == 0 || mem[PC] == 0x76)
-            break;
+      if (C == 9)
+        for (int i = DE; mem[i] != 0x24; i += 1)
+          std::cout.put(mem[i]);
+      if (C == 2)
+        std::cout.put(E);
     }
 
-    std::cout << "\n\n*** Cycles=" << std::dec << cpu.get_cycles() << std::endl
-              << "*** Instructions=" << instructions << std::endl;
+    instructions++;
+    cpu.i8080_instructions();
 
+    if (DISASSEMBLY == true)
+    {
+      disass.run_disassembly(PC, mem);
+      disass.run_memory(mem, cpu.get_size_mem());
+    }
+
+    if (PC == 0 || mem[PC] == 0x76)
+      break;
+    //i++;
+  }
+
+  std::cout << "\n\n*** Cycles=" << std::dec << cpu.get_cycles() << std::endl
+            << "*** Instructions=" << instructions << std::endl;
 }
 
 int main()
 {
-    banner();
+  banner();
 
-    clock_t start = clock();
+  clock_t start = clock();
 
-    execute_tests("src/intel8080/i8080_tests/bin/TST8080.COM");
-    execute_tests("src/intel8080/i8080_tests/bin/8080PRE.COM");
+  execute_tests("src/intel8080/i8080_tests/bin/TEST.COM");
+  execute_tests("src/intel8080/i8080_tests/bin/CPUTEST.COM");
 
-    clock_t result = clock() - start;
+  clock_t result = clock() - start;
 
-    std::cout << "\n*** Runtime=" << result << " ms" << std::endl;
+  std::cout << "\n*** Runtime=" << result << " ms" << std::endl;
 
-    return EXIT_SUCCESS;
+  return EXIT_SUCCESS;
 }

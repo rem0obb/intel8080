@@ -837,5 +837,5 @@ void Disassembly::run_disassembly(word_t __pc, byte_t *__mem)
 void Disassembly::run_memory(byte_t *__mem, signed __size)
 {
     for(signed i = 0; i <= __size; i++)
-        file_mem << std::hex << __mem[i] << std::endl;
+        file_mem << std::hex << __mem[i] << '\n';
 }

@@ -47,8 +47,7 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 
-#ifndef i8080_h
-#define i8080_h
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -77,39 +76,35 @@ typedef struct instructions
   byte_t A, C, H, L, B, D, E;
 
   // flags
-  bool AC : 1, SF : 1, CF : 1, PF : 1, ZF : 1;
+  bool AC , SF , CF , PF , ZF ;
 
   // variables to save results and retrieve
   int cycles; // count cycles
 
   // stack manipulation
-  void push ( word_t data16 );
+  void push ( const word_t &data16 );
   word_t pop();
 
   // instructions
-  void add ( word_t data16 );
+  void add ( const word_t &data16 );
   void dad ( word_t data16 );
-  void sub ( word_t data16 );
-  void sbb ( word_t data16 );
-  void cmp ( byte_t data8 );
-  void ana ( word_t data16 );
-  void ora ( word_t data16 );
-  void xra ( word_t data16 );
+  void sub ( const word_t &data16 );
+  void sbb ( const word_t &data16 );
+  void cmp ( const byte_t &data8 );
+  void ana ( const word_t &data16 );
+  void ora ( const word_t &data16 );
+  void xra ( const word_t &data16 );
   void ret();
   void jmp();
   void call();
-  void rst ( word_t addr );
-  word_t inr ( byte_t data16 );
-  word_t dcr ( byte_t data16 );
+  void rst ( const word_t &addr );
+  void inr ( byte_t &data16 );
+  void dcr ( byte_t &data16 );
   void daa();
   void xthl();
   void xchg();
   void ral();
   void rar();
-
-  void port_out ( byte_t data8, byte_t val );
-  byte_t port_in ( byte_t data8 );
-
   void set_bc ( word_t data16 );
   void set_hl ( word_t data16 );
   void set_de ( word_t data16 );
@@ -117,13 +112,16 @@ typedef struct instructions
   word_t get_hl();
   word_t get_de();
 
+  void port_out ( byte_t data8, byte_t val );
+  byte_t port_in ( byte_t data8 );
+
 } Instructions;
 
 typedef class Microprocessor : protected Instructions
 {
  private:
   void flags_init();
-  void execute_opcode ( byte_t opcode ) noexcept;
+  void execute_opcode ( byte_t opcode );
 
  public:
   byte_t get_register_c();
@@ -147,5 +145,3 @@ typedef class Microprocessor : protected Instructions
   ~Microprocessor();
 
 } i8080;
-
-#endif // i8080_h
