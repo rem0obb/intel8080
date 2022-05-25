@@ -64,7 +64,7 @@ typedef struct instructions
  protected:
 
   // variable in size of loaded in memory intell
-  signed size_mem;
+  uint64_t size_mem;
 
   // program status word
   byte_t PSW;
@@ -79,7 +79,7 @@ typedef struct instructions
   bool AC , SF , CF , PF , ZF ;
 
   // variables to save results and retrieve
-  int cycles; // count cycles
+  uint64_t cycles; // count cycles
 
   // stack manipulation
   void push ( const word_t &data16 );
@@ -115,12 +115,14 @@ typedef struct instructions
   void port_out ( byte_t data8, byte_t val );
   byte_t port_in ( byte_t data8 );
 
+  instructions();
+  ~instructions();
+
 } Instructions;
 
 typedef class Microprocessor : protected Instructions
 {
  private:
-  void flags_init();
   void execute_opcode ( byte_t opcode );
 
  public:
@@ -134,8 +136,8 @@ typedef class Microprocessor : protected Instructions
   byte_t get_register_b();
   byte_t get_register_l();
   byte_t get_register_h();
-  int get_cycles();
-  signed get_size_mem();
+  uint64_t get_cycles();
+  uint64_t get_size_mem();
   byte_t *memory_addr();
 
   void load_file_bin ( std::string name, byte_t *load, word_t jump );

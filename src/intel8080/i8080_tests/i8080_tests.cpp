@@ -38,7 +38,7 @@ const static void execute_tests(const std::string &name)
   cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
   int instructions = 0;                // counter instructions
 
-  mem[0x00005] = 0xc9;
+  mem[0x5] = 0xc9;
 
   while(true)
   {
@@ -46,8 +46,6 @@ const static void execute_tests(const std::string &name)
     E = cpu.get_register_e();
     C = cpu.get_register_c();
     DE = cpu.get_register_de();
-
-    //printf("%x\n", mem[PC]);
 
     if (PC == 5)
     {
@@ -58,9 +56,6 @@ const static void execute_tests(const std::string &name)
         std::cout.put(E);
     }
 
-    instructions++;
-    cpu.i8080_instructions();
-
     if (DISASSEMBLY == true)
     {
       disass.run_disassembly(PC, mem);
@@ -69,7 +64,9 @@ const static void execute_tests(const std::string &name)
 
     if (PC == 0 || mem[PC] == 0x76)
       break;
-    //i++;
+
+    instructions++;
+    cpu.i8080_instructions();
   }
 
   std::cout << "\n\n*** Cycles=" << std::dec << cpu.get_cycles() << std::endl
@@ -82,7 +79,9 @@ int main()
 
   clock_t start = clock();
 
-  execute_tests("src/intel8080/i8080_tests/bin/TEST.COM");
+  execute_tests("src/intel8080/i8080_tests/bin/8080PRE.COM");
+  execute_tests("src/intel8080/i8080_tests/bin/TST8080.COM");
+  execute_tests("src/intel8080/i8080_tests/bin/8080EXER.COM");
   execute_tests("src/intel8080/i8080_tests/bin/CPUTEST.COM");
 
   clock_t result = clock() - start;
