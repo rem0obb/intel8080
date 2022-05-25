@@ -50,7 +50,6 @@
 #pragma once
 
 #include <fstream>
-#include <iostream>
 #include <cstring>
 
 #define MAX_MEMORY 0x10000L
@@ -140,7 +139,7 @@ typedef class Microprocessor : protected Instructions
   uint64_t get_size_mem();
   byte_t *memory_addr();
 
-  void load_file_bin ( std::string name, byte_t *load, word_t jump );
+  void load_file_bin ( std::string name, byte_t *load, word_t jump = 0x100 );
   void i8080_instructions();
 
   Microprocessor();

@@ -47,6 +47,9 @@
 //  THE SOFTWARE.
 
 #include "i8080.hpp"
+#include <iostream>
+#include <stdexcept>
+
 
 namespace memory
 {
@@ -63,9 +66,9 @@ inline word_t read_memory_word ( word_t addr )
          read_memory_byte ( addr );
 }
 
-inline void write_memory_byte ( word_t addr, byte_t data16 )
+inline void write_memory_byte ( word_t addr, byte_t data8 )
 {
-  memory[addr] = data16;
+  memory[addr] = data8;
 }
 
 inline void write_memory_word ( word_t addr, word_t data16 )
@@ -77,7 +80,6 @@ inline void write_memory_word ( word_t addr, word_t data16 )
 
 static constexpr byte_t cycles_opcode[256] =
 {
-
   4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
   4, 10, 7,  5,  5,  5,  7,  4,  4, 10, 7,  5,  5,  5,  7, 4,
   4, 10, 16, 5,  5,  5,  7,  4,  4, 10, 16, 5,  5,  5,  7, 4,
@@ -97,7 +99,6 @@ static constexpr byte_t cycles_opcode[256] =
   5, 10, 10, 10, 11, 11, 7,  11, 5, 10, 10, 10, 11, 17, 7, 11,
   5, 10, 10, 18, 11, 11, 7,  11, 5, 5,  10, 4,  11, 17, 7, 11,
   5, 10, 10, 4,  11, 11, 7,  11, 5, 5,  10, 4,  11, 17, 7, 11
-
 };
 
 //
@@ -247,22 +248,22 @@ void Instructions::rst ( const word_t &addr )
   PC = addr;
 }
 
-void Instructions::inr ( byte_t &data16 )
+void Instructions::inr ( byte_t &data8 )
 {
-  data16++;
-  PF = parity ( data16 );
-  SF = ( data16 & 0x80 ) != 0;
-  ZF = ( ( data16 & 0xff ) == 0 );
-  AC = ( data16 & 0xf ) == 0;
+  data8++;
+  PF = parity ( data8 );
+  SF = ( data8 & 0x80 ) != 0;
+  ZF = ( ( data8 & 0xff ) == 0 );
+  AC = ( data8 & 0xf ) == 0;
 }
 
-void Instructions::dcr ( byte_t &data16 )
+void Instructions::dcr ( byte_t &data8 )
 {
-  data16--;
-  PF = parity ( data16 );
-  SF = ( data16 & 0x80 ) != 0;
-  ZF = ( ( data16 & 0xff ) == 0 );
-  AC = ( ( data16 & 0xf ) == 0x0f );
+  data8--;
+  PF = parity ( data8 );
+  SF = ( data8 & 0x80 ) != 0;
+  ZF = ( ( data8 & 0xff ) == 0 );
+  AC = ( ( data8 & 0xf ) == 0x0f );
 }
 
 void Instructions::daa()
@@ -824,7 +825,7 @@ void i8080::execute_opcode ( byte_t opcode )
       break;
 
     case 0x76:
-      break; // not implemented hlt
+      break; // not implemented hlt, The main use case of the HALT instruction is thus "wait for an interrupt".
 
     case 0x77:
       memory::write_memory_byte ( get_hl(), A );
@@ -1384,7 +1385,7 @@ void i8080::execute_opcode ( byte_t opcode )
       ZF = (PSW >> 6) & 1;
       AC = (PSW >> 4) & 1;
       PF = (PSW >> 2) & 1;
-      CF = (PSW >> 0) & 1;
+      CF = PSW  & 1;
       break;
 
     case 0xf2:
@@ -1395,8 +1396,8 @@ void i8080::execute_opcode ( byte_t opcode )
 
       break;
 
-    case 0xf3: // di
-      break;   // not implemented
+    case 0xf3: // di // not implemented
+      break; 
 
     case 0xf4:
       if ( !SF )
@@ -1407,6 +1408,7 @@ void i8080::execute_opcode ( byte_t opcode )
       break;
 
     case 0xf5: // push psw
+      PSW = 0;
       PSW |= SF << 7;
       PSW |= ZF << 6;
       PSW |= AC << 4;
@@ -1442,8 +1444,8 @@ void i8080::execute_opcode ( byte_t opcode )
 
       break;
 
-    case 0xfb: // ei
-      break;   // not implemented
+    case 0xfb: // ei  // not implemented
+      break; 
 
     case 0xfc:
       if ( SF )
@@ -1466,9 +1468,13 @@ void i8080::execute_opcode ( byte_t opcode )
       break;
 
     default:
-      std::cout << "*** Instruction not implemented " << memory::memory[PC] << std::endl;
+      throw std::runtime_error("*** Instruction not implemented " + memory::memory[PC]);
   }
 }
+
+/*
+  API for usage library intel
+*/
 
 byte_t i8080::get_register_c()
 {
@@ -1546,16 +1552,18 @@ void i8080::load_file_bin ( std::string name, byte_t *load, word_t jump )
 
   if ( file.is_open() )
   {
+    // get size bin
     file.seekg ( 0, file.end );
     size_mem = file.tellg();
     file.seekg ( 0, file.beg );
 
-    if ( file.peek() == std::ifstream::traits_type::eof() )
+    // verify memory
+    if ( size_mem <= 0 )
       throw std::runtime_error ( "File " + name + " empty" );
     else if(size_mem > MAX_MEMORY)
       throw std::runtime_error ( "Memory not supported, memory intel this suport 65536d" );
 
-    file.read ( ( char * ) load + PC,  size_mem);
+    file.read ( ( char * ) load + PC,  size_mem); // read file and allocate in array 
 
     std::cout << "******************************************************" << std::endl
               << "*** File " << name << std::endl

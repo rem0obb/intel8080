@@ -35,12 +35,12 @@ const static void execute_tests(const std::string &name)
   byte_t E;
   byte_t C;
 
-  cpu.load_file_bin(name, mem, 0x100); // load bin for memory and jump pc for 0x100
+  cpu.load_file_bin(name, mem); // load bin for memory and jump pc for 0x100
   int instructions = 0;                // counter instructions
 
   mem[0x5] = 0xc9;
 
-  while(true)
+  while (true)
   {
     PC = cpu.get_pc();
     E = cpu.get_register_e();
@@ -79,9 +79,8 @@ int main()
 
   clock_t start = clock();
 
-  execute_tests("src/intel8080/i8080_tests/bin/8080PRE.COM");
-  execute_tests("src/intel8080/i8080_tests/bin/TST8080.COM");
-  execute_tests("src/intel8080/i8080_tests/bin/8080EXER.COM");
+  execute_tests("/home/mob/Documents/c-cpp-csharp/i8080-core/assets/8080EX1.COM");
+  execute_tests("/home/mob/Documents/c-cpp-csharp/i8080-core/assets/TEST.COM");
   execute_tests("src/intel8080/i8080_tests/bin/CPUTEST.COM");
 
   clock_t result = clock() - start;
